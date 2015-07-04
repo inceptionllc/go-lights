@@ -1,4 +1,4 @@
-package schedule
+package color
 
 import (
 	"fmt"

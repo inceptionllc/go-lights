@@ -1,7 +1,7 @@
 package schedule_test
 
 import (
-	. "github.com/inceptionllc/go-schedule"
+	. "github.com/inceptionllc/go-lights/schedule"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

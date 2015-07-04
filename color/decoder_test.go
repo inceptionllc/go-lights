@@ -1,9 +1,9 @@
-package schedule_test
+package color_test
 
 import (
 	"image/color"
 
-	. "github.com/inceptionllc/go-schedule"
+	. "github.com/inceptionllc/go-lights/color"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -1,0 +1,14 @@
+dependencies:
+  pre:
+    - mkdir -p /home/ubuntu/.go_workspace/src/github.com/inceptionllc
+    - if [[ ! -e /home/ubuntu/.go_workspace/src/github.com/inceptionllc/go-lights ]]; then ln -s `pwd` /home/ubuntu/.go_workspace/src/github.com/inceptionllc; fi
+    - curl -s https://raw.githubusercontent.com/pote/gpm/v1.3.2/bin/gpm | bash
+
+test:
+  override:
+    - go test ./...
+
+general:
+  branches:
+    ignore:
+      - gh-pages
