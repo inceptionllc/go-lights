@@ -1,7 +1,7 @@
 package lights_test
 
 import (
-	. "github.com/inceptionllc/go-lights/lights"
+	. "github.com/inceptionllc/go-lights"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
