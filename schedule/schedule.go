@@ -5,6 +5,29 @@ import (
 	"time"
 )
 
+// NewCrontab creates a new crontab ready to add specs
+func NewCrontab() *Crontab {
+	return &Crontab{}
+}
+
+// Crontab describes a complete set of cron entries
+type Crontab struct {
+	Specs []*Spec
+}
+
+// Add a new spec to the crontab
+func (c *Crontab) Add(expr, action string) {
+	c.Specs = append(c.Specs, &Spec{Expression: expr, Action: action})
+}
+
+// Spec describes a cron spec entry
+type Spec struct {
+	Expression string
+	Action     string
+}
+
+// --------------------- Legacy code below ------------------------
+
 // PatternSlot represents a light state in the overall pattern.
 type PatternSlot struct {
 	Color      color.Color   `json:"color"`
