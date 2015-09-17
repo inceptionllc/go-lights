@@ -3,7 +3,7 @@ package lights_test
 import (
 	"image/color"
 
-	. "github.com/inceptionllc/go-lights/color"
+	. "github.com/inceptionllc/go-lights"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
