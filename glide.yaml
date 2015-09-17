@@ -1,0 +1,8 @@
+package: github.com/inceptionllc/lights
+import:
+  - package: github.com/bitly/go-nsq
+    ref:     v1.0.4
+  - package: github.com/onsi/ginkgo
+    ref:     v1.2.0
+  - package: github.com/onsi/gomega
+    ref:     d6c945f9fdbf

@@ -1,4 +1,4 @@
-package color_test
+package lights_test
 
 import (
 	"image/color"

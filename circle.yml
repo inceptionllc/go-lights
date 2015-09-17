@@ -1,11 +1,18 @@
+machine:
+  environment:
+    GO15VENDOREXPERIMENT: 1
+    GOROOT: "/home/ubuntu/go"
+    PATH: "/home/ubuntu/go/bin:$PATH"
+
 dependencies:
+  cache_directories:
+    - "/home/ubuntu/go"
   pre:
-    - mkdir -p /home/ubuntu/.go_workspace/src/github.com/inceptionllc
-    - if [[ ! -e /home/ubuntu/.go_workspace/src/github.com/inceptionllc/go-lights ]]; then ln -s `pwd` /home/ubuntu/.go_workspace/src/github.com/inceptionllc; fi
-    - curl -s https://raw.githubusercontent.com/pote/gpm/v1.3.2/bin/gpm | bash
+    - if [[ ! -e /home/ubuntu/go/bin/go ]]; then cd /home/ubuntu; curl https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz | tar -xz; fi
 
 test:
   override:
+    - go version
     - go test ./...
 
 general:

@@ -1,5 +1,5 @@
 # Schedule
 
-Lighting schedules [Go][] library.
+Lighting app utilities in [Go][] library.
 
 [Go]: http://golang.org
