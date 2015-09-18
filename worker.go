@@ -11,6 +11,10 @@ import (
 	"github.com/bitly/go-nsq"
 )
 
+// WorkerFunc handles incoming string messages returning an error if the
+// message could not be handled.
+type WorkerFunc func(message string) error
+
 // Worker takes care of the common nsq worker tasks that all message
 // driven agents must carry out. The worker takes care of bootstrapping
 // the system, and automatically configures nsq according to the current
@@ -29,10 +33,20 @@ type Worker struct {
 
 // NewWorker creates a new worker ready for configuration. Call Start() on
 // the worker to begin processing messages. Returns an error if there was a
-// problem creating the worker.
-func NewWorker(id string) (*Worker, error) {
+// problem creating the worker. Workers require an ID and take an optional
+// error - if the error is set, the worker creation will return the passed
+// in error.
+func NewWorker(id string, err error) (*Worker, error) {
 	// Allow setting agent mode via environmental variable
 	mode := os.Getenv("MODE")
+
+	if err != nil {
+		if mode == "DEV" {
+			id = "dev"
+		} else {
+			return err
+		}
+	}
 
 	config := nsq.NewConfig()
 
@@ -101,20 +115,27 @@ func (w *Worker) Start() error {
 // worker.ID + '.' + name
 //
 // and the channel `ID`
-func (w *Worker) Consumer(name string) (*nsq.Consumer, error) {
+func (w *Worker) Consumer(name string, handler WorkerFunc) error {
 	if w.started {
-		return nil, fmt.Errorf("Could not create consumer, worker is already started")
+		return fmt.Errorf("Could not create consumer, worker is already started")
 	}
 
 	consumer, err := nsq.NewConsumer(w.ID+"."+name, w.ID, w.config)
 	if err != nil {
 		//log.Println("Error creating NSQ consumer", err)
-		return nil, err
+		return err
 	}
+
+	consumer.AddHandler(nsq.HandlerFunc(func(msg *nsq.Message) error {
+		log.Println("Msg p", msg.Body)
+		cmd := string(msg.Body)
+		log.Println("Got program", cmd)
+		return handler(cmd)
+	}))
 
 	w.consumers = append(w.consumers, consumer)
 
-	return consumer, nil
+	return nil
 }
 
 // allStopped checks if all the channels are stopped.
