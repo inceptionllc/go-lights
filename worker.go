@@ -44,7 +44,7 @@ func NewWorker(id string, err error) (*Worker, error) {
 		if mode == "DEV" {
 			id = "dev"
 		} else {
-			return err
+			return nil, err
 		}
 	}
 
