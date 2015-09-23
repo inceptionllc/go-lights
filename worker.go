@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -20,9 +21,7 @@ type WorkerFunc func(message string) error
 // the system, and automatically configures nsq according to the current
 // environment.
 type Worker struct {
-	ID   string // The ID for the hardware the worker is running on
-	Mode string // The mode for the current worker (DEV | "")
-
+	ID        *DeviceID       // The ID for the hardware the worker is running on
 	config    *nsq.Config     // The nsq configuration for the worker
 	consumers []*nsq.Consumer // Consumers that have been created
 	started   bool            // Flag true if the worker has been started
@@ -33,24 +32,21 @@ type Worker struct {
 
 // NewWorker creates a new worker ready for configuration. Call Start() on
 // the worker to begin processing messages. Returns an error if there was a
-// problem creating the worker. Workers require an ID and take an optional
-// error - if the error is set, the worker creation will return the passed
-// in error.
-func NewWorker(id string, err error) (*Worker, error) {
-	// Allow setting agent mode via environmental variable
-	mode := os.Getenv("MODE")
-
-	if err != nil {
-		if mode == "DEV" {
-			id = "dev"
-		} else {
-			return nil, err
-		}
-	}
+// problem creating the worker. If an ID is provided the worker will use it,
+// otherwise an ID will automatically be generated using lights.NewID().
+func NewWorker(id ...*DeviceID) (*Worker, error) {
 
 	config := nsq.NewConfig()
 
-	return &Worker{ID: id, Mode: mode, config: config}, nil
+	if len(id) > 0 {
+		return &Worker{ID: id[0], config: config}, nil
+	}
+	// Automatically add an ID if none was provided.
+	did, err := NewID()
+	if err != nil {
+		return nil, err
+	}
+	return &Worker{ID: did, config: config}, nil
 }
 
 // Started returns true if the Worker has already been started by calling Start().
@@ -64,16 +60,19 @@ func (w *Worker) Start() error {
 	w.started = true
 
 	// Connect consumers to the local nsqlookupd
-	var lookupd string
-	if w.Mode == "DEV" {
-		lookupd = "localhost:4161"
+	var lookupds []string
+	lookupd := os.Getenv("INC_NSQLOOKUPD")
+	if lookupd == "" {
+		lookupds = []string{"nsqlookupd.local:4161"}
 	} else {
-		lookupd = "nsqlookupd.local:4161"
+		lookupds = strings.Split(lookupd, ",")
 	}
 	for _, consumer := range w.consumers {
-		err := consumer.ConnectToNSQLookupd(lookupd)
-		if err != nil {
-			return err
+		for _, lookup := range lookupds {
+			err := consumer.ConnectToNSQLookupd(lookup)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -109,18 +108,18 @@ func (w *Worker) Start() error {
 	}
 }
 
-// Consumer creates a new nsq Consumer for the worker. The name is used
+// Consumer creates a new nsq Consumer for the worker. The topic is used
 // to subscribe to the topic name which is:
 //
-// worker.ID + '.' + name
+// worker.ID + '.' + topic
 //
-// and the channel `ID`
-func (w *Worker) Consumer(name string, handler WorkerFunc) error {
+// and the channel as provided.
+func (w *Worker) Consumer(topic, channel string, handler WorkerFunc) error {
 	if w.started {
 		return fmt.Errorf("Could not create consumer, worker is already started")
 	}
 
-	consumer, err := nsq.NewConsumer(w.ID+"."+name, w.ID, w.config)
+	consumer, err := nsq.NewConsumer(w.ID.ID+"."+topic, channel, w.config)
 	if err != nil {
 		//log.Println("Error creating NSQ consumer", err)
 		return err
