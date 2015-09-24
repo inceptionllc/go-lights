@@ -3,7 +3,7 @@ package lights_test
 import (
 	"net"
 
-	. "github.com/inceptionllc/go-lights"
+	"github.com/inceptionllc/go-lights"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,7 +17,7 @@ var _ = Describe("Core", func() {
 
 			addr, err := net.ParseMAC("01:23:45:67:89:ab")
 			Ω(err).ShouldNot(HaveOccurred())
-			id := AddrToID(addr)
+			id := lights.AddrToID(addr)
 			Ω(id).Should(Equal("0123456789ab"))
 		})
 
@@ -25,7 +25,7 @@ var _ = Describe("Core", func() {
 
 			addr, err := net.ParseMAC("01:23:45:67:89:ab:cd:ef")
 			Ω(err).ShouldNot(HaveOccurred())
-			id := AddrToID(addr)
+			id := lights.AddrToID(addr)
 			Ω(id).Should(Equal("0123456789abcdef"))
 		})
 	})
