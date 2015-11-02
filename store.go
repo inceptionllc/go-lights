@@ -63,7 +63,12 @@ func (f *FileStore) Read(collection, id string) (string, error) {
 
 // Write a value to the provided collection and ID.
 func (f *FileStore) Write(collection, id, value string) error {
-	return ioutil.WriteFile(filepath.Join(f.Base, collection, id+".txt"), []byte(value), 0660)
+	base := filepath.Join(f.Base, collection)
+	err := os.MkdirAll(base, 0755)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(base, id+".txt"), []byte(value), 0660)
 }
 
 // Remove a value from the provided collection and ID.
