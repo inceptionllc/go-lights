@@ -18,6 +18,8 @@ type Store interface {
 	Write(collection, id, value string) error
 	// Remove a value from the provided collection with a given ID.
 	Remove(collection, id string) error
+	// Remove all values from the provided collection.
+	RemoveAll(collection string) error
 	// Load reads all the values out of a collection.
 	Load(colection string) ([]string, error)
 }
@@ -74,6 +76,11 @@ func (f *FileStore) Write(collection, id, value string) error {
 // Remove a value from the provided collection and ID.
 func (f *FileStore) Remove(collection, id string) error {
 	return os.Remove(filepath.Join(f.Base, collection, id+".txt"))
+}
+
+// RemoveAll removes all items from a collection.
+func (f *FileStore) RemoveAll(collection string) error {
+	return os.RemoveAll(filepath.Join(f.Base, collection))
 }
 
 // Load all the values for a collection.
@@ -140,6 +147,12 @@ func (s *MockStore) Remove(collection, id string) error {
 	if ok {
 		delete(c, id)
 	}
+	return nil
+}
+
+// RemoveAll clears all items from a collection.
+func (s *MockStore) RemoveAll(collection string) error {
+	delete(s.Data, collection)
 	return nil
 }
 
