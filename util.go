@@ -3,6 +3,7 @@ package lights
 import (
 	"io/ioutil"
 	"log"
+	"path/filepath"
 	"strings"
 )
 
@@ -50,4 +51,12 @@ func ReadFileOrPanic(path string) []byte {
 // or panics if there was a problem.
 func ReadFileAsStringOrPanic(path string) string {
 	return string(ReadFileOrPanic(path))
+}
+
+// PrepPath prepares a path for use by cleaning and converting to an absolute
+// path.
+func PrepPath(path string) (string, error) {
+	// Convert to absolute path - should make file-not-found errors report
+	// the full path of the file that was attempted to be read.
+	return filepath.Abs(filepath.Clean(path))
 }

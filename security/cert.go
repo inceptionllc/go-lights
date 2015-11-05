@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+
+	"github.com/inceptionllc/go-lights"
 )
 
 // LoadTLSCertificates loads any number of certificates from the file system
@@ -14,7 +16,12 @@ import (
 func LoadTLSCertificates(paths ...string) ([]tls.Certificate, error) {
 	certs := []tls.Certificate{}
 	for _, path := range paths {
-
+		// Convert to absolute path - should make file-not-found errors report
+		// the full path of the file that was attempted to be read.
+		path, err := lights.PrepPath(path)
+		if err != nil {
+			return nil, err
+		}
 		caRaw, err := ioutil.ReadFile(path + ".pem")
 		if err != nil {
 			return nil, err
@@ -42,6 +49,12 @@ func LoadTLSCertificates(paths ...string) ([]tls.Certificate, error) {
 func LoadCertPool(paths ...string) (*x509.CertPool, error) {
 	pool := x509.NewCertPool()
 	for _, path := range paths {
+		// Convert to absolute path - should make file-not-found errors report
+		// the full path of the file that was attempted to be read.
+		path, err := lights.PrepPath(path)
+		if err != nil {
+			return nil, err
+		}
 		if !strings.HasSuffix(path, ".pem") {
 			path += ".pem"
 		}
@@ -63,6 +76,12 @@ func LoadTLSKeyPairs(paths ...string) ([]tls.Certificate, error) {
 	certs := []tls.Certificate{}
 
 	for _, path := range paths {
+		// Convert to absolute path - should make file-not-found errors report
+		// the full path of the file that was attempted to be read.
+		path, err := lights.PrepPath(path)
+		if err != nil {
+			return nil, err
+		}
 		cert, err := tls.LoadX509KeyPair(path+".pem", path+".key")
 		if err != nil {
 			log.Println("Load keypair error", err)
@@ -85,6 +104,12 @@ func LoadTLSKeyPairs(paths ...string) ([]tls.Certificate, error) {
 func LoadPEMCertPool(paths ...string) (*x509.CertPool, error) {
 	pool := x509.NewCertPool()
 	for _, path := range paths {
+		// Convert to absolute path - should make file-not-found errors report
+		// the full path of the file that was attempted to be read.
+		path, err := lights.PrepPath(path)
+		if err != nil {
+			return nil, err
+		}
 		if !strings.HasSuffix(path, ".pem") {
 			path += ".pem"
 		}
