@@ -56,6 +56,7 @@ func (w *Worker) Consumer(handler WorkerFunc) error {
 // Send transmits a message to an agent.
 func (w *Worker) Send(agent, message string) {
 	url := "http://127.0.0.1:" + w.agentPort(agent)
+	log.Println("->", agent, message)
 	resp, err := http.Post(url, "text/plain", strings.NewReader(message))
 	if err != nil {
 		log.Println("Error sending message", agent, message, err)
