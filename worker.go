@@ -36,13 +36,16 @@ func NewWorker(agent string) (*Worker, error) {
 
 // Start begins processing commands blocking the thread.
 func (w *Worker) Start() error {
-	return http.ListenAndServe(":"+w.agentPort(w.agent), nil)
+	host := ":" + w.agentPort(w.agent)
+	log.Println("Listening for HTTP API", host)
+	return http.ListenAndServe(host, nil)
 }
 
 // Consumer creates a new API command Consumer for the worker.
 func (w *Worker) Consumer(handler WorkerFunc) error {
 	http.HandleFunc("/command", func(resp http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
+		log.Println("<-", string(body))
 		if w.errorFree(err, resp) {
 			err = handler(string(body))
 			if w.errorFree(err, resp) {
@@ -55,12 +58,18 @@ func (w *Worker) Consumer(handler WorkerFunc) error {
 
 // Send transmits a message to an agent.
 func (w *Worker) Send(agent, message string) {
-	url := "http://127.0.0.1:" + w.agentPort(agent)
+	url := "http://127.0.0.1:" + w.agentPort(agent) + "/command"
 	log.Println("->", agent, message)
 	resp, err := http.Post(url, "text/plain", strings.NewReader(message))
 	if err != nil {
 		log.Println("Error sending message", agent, message, err)
 	} else {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println("Error reading response body", err)
+		} else {
+			log.Println("  ", string(body))
+		}
 		resp.Body.Close()
 	}
 }
