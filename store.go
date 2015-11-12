@@ -3,6 +3,7 @@ package lights
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -86,20 +87,34 @@ func (f *FileStore) RemoveAll(collection string) error {
 // Load all the values for a collection.
 func (f *FileStore) Load(collection string) ([]string, error) {
 	items := []string{}
-	filepath.Walk(filepath.Join(f.Base, collection), func(path string, info os.FileInfo, err error) error {
+	base := filepath.Join(f.Base, collection)
+	base, err := filepath.Abs(base)
+	if err != nil {
+		log.Println("Error getting abs path to", collection, err)
+		return nil, err
+	}
+	log.Println("Loading collection", collection, "from", base)
+	filepath.Walk(base, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			// Ignore
+			log.Println("store ignoring walk error", err)
 			return filepath.SkipDir
 		}
-		if info.IsDir() {
-			return filepath.SkipDir
-		}
-		if filepath.Ext(path) == "txt" {
+		/*
+			if info.IsDir() {
+				log.Println("skipping dir", path)
+				return filepath.SkipDir
+			}
+		*/
+		if filepath.Ext(path) == ".txt" {
+			log.Println("loading item", path)
 			text, err := ioutil.ReadFile(path)
 			if err != nil {
 				return err
 			}
 			items = append(items, string(text))
+		} else {
+			log.Println("skipping non item", path, filepath.Ext(path))
 		}
 		return nil
 	})
