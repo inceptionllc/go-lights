@@ -3,6 +3,7 @@ package lights
 import (
 	"encoding/hex"
 	"errors"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -13,6 +14,16 @@ import (
 // be shortened to the shortest unique ID (similar to git commit IDs).
 type DeviceID struct {
 	ID string
+}
+
+// PanicOrID either produces an ID or panics if one can't be generated.
+func PanicOrID() string {
+	id, err := NewID()
+	if err != nil {
+		log.Println("Could not generate a device ID", err)
+		os.Exit(0)
+	}
+	return id.ID
 }
 
 // NewID produces the device ID for an agent. The ID will be taken from
@@ -66,6 +77,11 @@ func (d *DeviceID) ContainedIn(ids []string) bool {
 		}
 	}
 	return false
+}
+
+// Returns this device ID as a string.
+func (d *DeviceID) String() string {
+	return d.ID
 }
 
 // AddrToID converts a network hardware address to a string device ID.

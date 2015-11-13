@@ -89,7 +89,7 @@ func (w *Worker) errorFree(err error, resp http.ResponseWriter) bool {
 func (w *Worker) agentPort(agent string) string {
 	switch agent {
 	case "gateway":
-		return "8001"
+		return "8000"
 	case "controller":
 		return "8002"
 	case "gatekeeper":
