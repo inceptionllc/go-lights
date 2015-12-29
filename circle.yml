@@ -7,8 +7,6 @@ machine:
 dependencies:
   cache_directories:
     - "/home/ubuntu/go"
-  pre:
-    - if [[ ! -e /home/ubuntu/go/bin/go ]]; then cd /home/ubuntu; curl https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz | tar -xz; fi
 
 test:
   override:
