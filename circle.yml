@@ -1,14 +1,6 @@
 machine:
   environment:
     GO15VENDOREXPERIMENT: 1
-    GOROOT: "/home/ubuntu/go"
-    PATH: "/home/ubuntu/go/bin:$PATH"
-
-dependencies:
-  cache_directories:
-    - "/home/ubuntu/go"
-  pre:
-    - mkdir -p /home/ubuntu/go
 
 test:
   override:
