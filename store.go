@@ -41,7 +41,7 @@ func NewFileStore(base ...string) (*FileStore, error) {
 	if len(base) > 0 {
 		root = base[0]
 	} else {
-		root = filepath.Join(os.Getenv("HOME"), "data")
+		root = "/var/lib/inception/lighting/data"
 	}
 	root, err := filepath.Abs(root)
 	if err != nil {
