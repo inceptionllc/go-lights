@@ -79,6 +79,24 @@ func (w *Worker) Send(agent, message string) {
 	}
 }
 
+// Status transmits a status update to an agent.
+func (w *Worker) Status(agent, message string) {
+	url := "http://127.0.0.1:" + w.agentPort(agent) + "/status"
+	log.Println("->", agent, message)
+	resp, err := http.Post(url, "text/plain", strings.NewReader(message))
+	if err != nil {
+		log.Println("Error sending message", agent, message, err)
+	} else {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println("Error reading response body", err)
+		} else {
+			log.Println("  ", string(body))
+		}
+		resp.Body.Close()
+	}
+}
+
 // errorFree will respond correctly to clients when an error occurs.
 // Returns true if there was an error for easy handling.
 func (w *Worker) errorFree(err error, resp http.ResponseWriter) bool {
