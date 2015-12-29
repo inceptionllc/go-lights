@@ -41,9 +41,14 @@ func (w *Worker) Start() error {
 	return http.ListenAndServe(host, nil)
 }
 
-// Consumer creates a new API command Consumer for the worker.
+// Consumer creates a new API /command Consumer for the worker.
 func (w *Worker) Consumer(handler WorkerFunc) error {
-	http.HandleFunc("/command", func(resp http.ResponseWriter, r *http.Request) {
+	return w.Handler("/command", handler)
+}
+
+// Handler registers a new API route handler for the worker.
+func (w *Worker) Handler(route string, handler WorkerFunc) error {
+	http.HandleFunc(route, func(resp http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		log.Println("<-", string(body))
 		if w.errorFree(err, resp) {
