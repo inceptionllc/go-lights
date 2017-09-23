@@ -60,3 +60,22 @@ func PrepPath(path string) (string, error) {
 	// the full path of the file that was attempted to be read.
 	return filepath.Abs(filepath.Clean(path))
 }
+
+// AgentPort looks up the correct port for an agent by name.
+func AgentPort(agent string) string {
+	switch agent {
+	case "gateway":
+		return "8000"
+	case "controller":
+		return "8002"
+	case "gatekeeper":
+		return "8003"
+	case "scheduler":
+		return "8004"
+	case "updater":
+		return "8005"
+	default:
+		// Default is the gateway agent
+		return ""
+	}
+}

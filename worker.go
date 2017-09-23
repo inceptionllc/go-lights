@@ -6,19 +6,18 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 )
 
 // WorkerFunc handles incoming string messages returning an error if the
 // message could not be handled.
 type WorkerFunc func(message string) error
 
-// Worker takes care of the common nsq worker tasks that all message
+// Worker takes care of the common worker tasks that all message
 // driven agents must carry out. The worker takes care of bootstrapping
-// the system, and automatically configures nsq according to the current
-// environment.
+// the system.
 type Worker struct {
-	agent string
+	agent  string
+	queues map[string]map[string]chan<- (QMessage) // Message queues for each agent/route combination
 }
 
 // NewWorker creates a new worker ready for configuration. Call Start() on
@@ -26,8 +25,9 @@ type Worker struct {
 // problem creating the worker. If an ID is provided the worker will use it,
 // otherwise an ID will automatically be generated using lights.NewID().
 func NewWorker(agent string) (*Worker, error) {
-	w := &Worker{agent: agent}
-	port := w.agentPort(agent)
+	w := &Worker{agent: agent, queues: make(map[string]map[string]chan<- (QMessage))}
+	// TODO pull cached messages from disk
+	port := AgentPort(agent)
 	if len(port) == 0 {
 		return nil, errors.New("Agent " + agent + " not supported")
 	}
@@ -36,7 +36,8 @@ func NewWorker(agent string) (*Worker, error) {
 
 // Start begins processing commands blocking the thread.
 func (w *Worker) Start() error {
-	host := ":" + w.agentPort(w.agent)
+	// Start up sending go routine
+	host := ":" + AgentPort(w.agent)
 	log.Println("Listening for HTTP API", host)
 	return http.ListenAndServe(host, nil)
 }
@@ -61,40 +62,35 @@ func (w *Worker) Handler(route string, handler WorkerFunc) error {
 	return nil
 }
 
+// Transmit reliably sends a message to another agent using HTTP.
+// Set consolidate to true if messages sent to the same agent and route should
+// only transmit the last message when an agent is offline. If consolidate is
+// false, messages queued for later delivery will all be delivered when the
+// agent is reachable again.
+func (w *Worker) Transmit(agent, route, message string, consolidate bool) {
+	msg := QMessage{agent: agent, route: route, message: message}
+	routes, ok := w.queues[msg.agent]
+	if !ok {
+		routes = map[string]chan<- (QMessage){}
+		w.queues[msg.agent] = routes
+	}
+	queue, ok := routes[msg.route]
+	if !ok {
+		// Set up the QWorker
+		_, queue = NewQWorker(msg)
+		routes[msg.route] = queue
+	}
+	queue <- msg
+}
+
 // Send transmits a message to an agent.
 func (w *Worker) Send(agent, message string) {
-	url := "http://127.0.0.1:" + w.agentPort(agent) + "/command"
-	log.Println("->", agent, message)
-	resp, err := http.Post(url, "text/plain", strings.NewReader(message))
-	if err != nil {
-		log.Println("Error sending message", agent, message, err)
-	} else {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("Error reading response body", err)
-		} else {
-			log.Println("  ", string(body))
-		}
-		resp.Body.Close()
-	}
+	w.Transmit(agent, "/command", message, false)
 }
 
 // Status transmits a status update to an agent.
 func (w *Worker) Status(agent, message string) {
-	url := "http://127.0.0.1:" + w.agentPort(agent) + "/status"
-	log.Println("->", agent, message)
-	resp, err := http.Post(url, "text/plain", strings.NewReader(message))
-	if err != nil {
-		log.Println("Error sending message", agent, message, err)
-	} else {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("Error reading response body", err)
-		} else {
-			log.Println("  ", string(body))
-		}
-		resp.Body.Close()
-	}
+	w.Transmit(agent, "/status", message, true)
 }
 
 // errorFree will respond correctly to clients when an error occurs.
@@ -106,23 +102,4 @@ func (w *Worker) errorFree(err error, resp http.ResponseWriter) bool {
 	resp.WriteHeader(http.StatusInternalServerError)
 	io.WriteString(resp, err.Error())
 	return false
-}
-
-// agentPort looks up the correct port for an agent by name.
-func (w *Worker) agentPort(agent string) string {
-	switch agent {
-	case "gateway":
-		return "8000"
-	case "controller":
-		return "8002"
-	case "gatekeeper":
-		return "8003"
-	case "scheduler":
-		return "8004"
-	case "updater":
-		return "8005"
-	default:
-		// Default is the gateway agent
-		return ""
-	}
 }
